@@ -59,3 +59,13 @@ create policy own_rules on public.rules for all
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy own_marks on public.marks for all
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- Права ролей. Без них PostgREST отвечает "permission denied for table",
+-- не доходя до RLS. Строки всё равно фильтрует RLS: без входа auth.uid()
+-- пуст, поэтому anon не видит ни одной.
+grant usage on schema public to anon, authenticated;
+
+grant select, insert, update, delete on public.metrics to anon, authenticated;
+grant select, insert, update, delete on public.weeks   to anon, authenticated;
+grant select, insert, update, delete on public.rules   to anon, authenticated;
+grant select, insert, update, delete on public.marks   to anon, authenticated;
