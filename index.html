@@ -274,6 +274,17 @@
         <div id="afterList"></div>
       </div>
     </div>
+    <details>
+      <summary>Пароль для входа с других устройств</summary>
+      <div class="card">
+        <p class="hint">Задай пароль здесь — и на телефоне можно будет войти этой же почтой и паролем, без письма. Встроенная почта Supabase отдаёт пару писем в час, поэтому пароль надёжнее.</p>
+        <div class="fields">
+          <div><label for="newPass">Новый пароль</label><input type="password" id="newPass" placeholder="не короче 8 символов" autocomplete="new-password"></div>
+        </div>
+        <div class="btnrow"><button class="go" id="setPass">Сохранить пароль</button></div>
+        <p class="flash" id="flash5"></p>
+      </div>
+    </details>
     <p class="who"><span id="whoAmI"></span> <button id="signOut">выйти</button></p>
   </div>
 </div>
@@ -1271,6 +1282,19 @@
       LS.del("sb_url"); LS.del("sb_key"); LS.set("sb_own", "1");
       location.reload();
     });
+    $("setPass").addEventListener("click", async function(){
+      var p = $("newPass").value;
+      if(p.length < 8){ flash("flash5", "Не короче 8 символов", true); return; }
+      if(!sb || !uid){ flash("flash5", "Сначала войди", true); return; }
+      flash("flash5", "Сохраняю");
+      try{
+        var r = await sb.auth.updateUser({password: p});
+        if(r.error) throw r.error;
+        $("newPass").value = "";
+        flash("flash5", "Готово. На телефоне теперь входи этой почтой и этим паролем");
+      }catch(e){ flash("flash5", (e && e.message) || String(e), true); }
+    });
+
     $("signOut").addEventListener("click", async function(){
       if(sb) await sb.auth.signOut();
       uid = null; db = null;
