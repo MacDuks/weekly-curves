@@ -273,6 +273,7 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script type="module">
 (function(){
   "use strict";
@@ -1146,8 +1147,21 @@
     }catch(e){ flash("flash", "Данные не загрузились: " + (e.message || e), true); }
   }
 
-  async function initBackend(){
+  function cfgPair(){
+    // Значения из config.js действуют на всех устройствах; то, что человек
+    // ввёл руками на этом устройстве, имеет приоритет.
+    var own = LS.get("sb_own") === "1";
     var url = LS.get("sb_url"), key = LS.get("sb_key");
+    if(url && key) return {url:url, key:key, own:true};
+    if(own) return {url:"", key:"", own:true};
+    var c = window.APP_CONFIG || {};
+    if(c.url && c.key) return {url:String(c.url).replace(/\/+$/, ""), key:String(c.key), own:false};
+    return {url:"", key:"", own:false};
+  }
+
+  async function initBackend(){
+    var pair = cfgPair();
+    var url = pair.url, key = pair.key;
     if(!url || !key){ gate("gSetup"); return; }
     gate("gWait", "Подключаюсь к базе.");
     var session = null;
@@ -1180,7 +1194,7 @@
         flashG("gFlash1", "Нужен publishable key (sb_publishable_…) или легаси anon (eyJ…)", true);
         return;
       }
-      LS.set("sb_url", u); LS.set("sb_key", k);
+      LS.set("sb_url", u); LS.set("sb_key", k); LS.set("sb_own", "1");
       flashG("gFlash1", "Проверяю ключ");
       initBackend();
     });
@@ -1194,7 +1208,7 @@
       }catch(e){ flashG("gFlash2", "Не отправилось: " + (e.message || e), true); }
     });
     $("resetCfg").addEventListener("click", function(){
-      LS.del("sb_url"); LS.del("sb_key");
+      LS.del("sb_url"); LS.del("sb_key"); LS.set("sb_own", "1");
       location.reload();
     });
     $("signOut").addEventListener("click", async function(){
