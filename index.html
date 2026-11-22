@@ -1159,7 +1159,22 @@
     return {url:"", key:"", own:false};
   }
 
+  async function freshConfig(){
+    // config.js подключён тегом, но браузер кеширует его надолго: правка
+    // настроек не доезжала бы до устройства. Перечитываем файл без кеша.
+    try{
+      var r = await fetch("config.js?t=" + Date.now(), {cache:"no-store"});
+      if(!r.ok) return;
+      var t = await r.text();
+      if(t.length > 4000) return;
+      var f = new Function(t + "\nreturn typeof APP_CONFIG !== 'undefined' ? APP_CONFIG : (window.APP_CONFIG || null);");
+      var c = f();
+      if(c && typeof c === "object") window.APP_CONFIG = c;
+    }catch(e){}
+  }
+
   async function initBackend(){
+    await freshConfig();
     var pair = cfgPair();
     var url = pair.url, key = pair.key;
     if(!url || !key){ gate("gSetup"); return; }
