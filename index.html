@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Схема до июля</title>
+<meta name="theme-color" content="#0c0d10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0d10; --surface-1:#14161b; --panel2:#191c22; --line:#262a33; --grid:#20242c;
+    --text-primary:#e9e7e4; --text-secondary:#9aa0ab; --text-muted:#6c737f;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --amber:#d9a05b; --green:#7fb285; --red:#c9796f;
+    --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg)}
+  body{color:var(--text-primary);font-family:Inter,-apple-system,system-ui,sans-serif;
+    font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+    padding:calc(var(--safe-t) + 14px) 0 calc(var(--safe-b) + 96px)}
+  .wrap{max-width:820px;margin:0 auto;padding:0 16px}
+  @media(min-width:720px){ body{padding-bottom:48px} .wrap{padding:0 24px} }
+
+  nav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:4px;
+    padding:8px 10px calc(var(--safe-b) + 8px);background:rgba(12,13,16,.94);
+    backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+  nav a{flex:1;text-align:center;padding:11px 2px;border-radius:11px;text-decoration:none;
+    color:var(--text-muted);font-size:12.5px;font-weight:600;min-height:46px}
+  nav a.on{background:var(--panel2);color:var(--text-primary)}
+  @media(min-width:720px){
+    nav{position:static;background:none;backdrop-filter:none;border:0;border-bottom:1px solid var(--line);
+      max-width:820px;margin:0 auto 26px;padding:0 24px 10px;gap:4px}
+    nav a{flex:0 0 auto;text-align:left;padding:8px 14px;font-size:13.5px}
+  }
+
+  h1{font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;line-height:1.1;margin:0 0 4px}
+  h2{font-size:14px;font-weight:600;margin:26px 0 10px}
+  .hint{color:var(--text-muted);font-size:13px;margin:0 0 16px;line-height:1.5}
+  .screen{display:none}
+  .screen.on{display:block}
+  .runway{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 18px;font-size:13px;color:var(--text-secondary)}
+  .runway b{font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:30px;color:var(--text-primary)}
+
+  .chart{background:var(--surface-1);border:1px solid var(--line);border-radius:14px;
+    padding:16px 14px 8px;margin-bottom:12px;position:relative}
+  .chead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .ctitle{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .swatch{width:10px;height:10px;border-radius:2px;flex:none}
+  .cnow{margin-left:auto;font-size:13px;color:var(--text-secondary);white-space:nowrap;text-align:right}
+  .cnow b{font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:26px;color:var(--text-primary);vertical-align:-2px}
+  .cdelta{font-size:11.5px;color:var(--text-muted);display:block}
+  .verdict{font-size:12.5px;color:var(--text-secondary);margin:6px 0;font-variant-numeric:tabular-nums}
+  .verdict .vtail{font-weight:600;display:block}
+  .verdict.good .vtail{color:var(--green)}
+  .verdict.warn .vtail{color:var(--amber)}
+  .verdict.bad .vtail{color:var(--red)}
+  .verdict.neutral .vtail{color:var(--text-muted);font-weight:400}
+  svg.plot{display:block;width:100%;height:auto;overflow:visible;touch-action:pan-y}
+  .empty{font-size:13px;color:var(--text-muted);padding:22px 0 26px;text-align:center}
+  .tip{position:absolute;pointer-events:none;background:#0a0b0e;border:1px solid var(--line);
+    border-radius:8px;padding:7px 10px;font-size:12px;color:var(--text-secondary);opacity:0;
+    transition:opacity .1s;white-space:nowrap;z-index:5}
+  .tip b{display:block;font-size:16px;font-weight:600;color:var(--text-primary);line-height:1.2}
+  .tip .key{display:inline-block;width:12px;height:2px;vertical-align:3px;margin-right:6px;border-radius:1px}
+
+  .card{background:var(--surface-1);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+  label{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;font-weight:600}
+  input,select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:11px;
+    color:var(--text-primary);font:inherit;font-size:16px;padding:12px 13px;color-scheme:dark;min-height:46px}
+  input:focus,select:focus{outline:none;border-color:#49515e}
+  .fields{display:grid;gap:12px}
+  @media(min-width:560px){ .two{grid-template-columns:1fr 1fr} .three{grid-template-columns:1fr 84px 150px} }
+  button{background:var(--panel2);border:1px solid var(--line);border-radius:11px;color:var(--text-primary);
+    font:inherit;font-size:15px;font-weight:500;padding:12px 18px;min-height:46px;cursor:pointer}
+  button.go{background:var(--amber);border-color:var(--amber);color:#17140e;font-weight:600;flex:1}
+  button.ghost{background:none}
+  button.danger{background:none;color:var(--red);border-color:#3d2d2b}
+  .btnrow{display:flex;gap:10px;margin-top:14px}
+  .flash{font-size:13px;color:var(--green);min-height:20px;margin:10px 0 0}
+  .flash.warn{color:var(--amber)}
+  .editing{border-color:var(--amber)}
+  .badge{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--amber);border:1px solid #4a3d28;border-radius:6px;padding:2px 7px;margin-left:8px}
+
+  .wk{display:flex;align-items:center;gap:12px;padding:13px 2px;border-top:1px solid var(--line);cursor:pointer}
+  .wk:first-child{border-top:0}
+  .wk:active{background:var(--panel2)}
+  .wk .d{font-size:14px;font-weight:600;width:62px;flex:none}
+  .wk .vals{font-size:13px;color:var(--text-secondary);font-variant-numeric:tabular-nums;flex:1;line-height:1.35}
+  .wk .nt{display:block;color:var(--text-muted);font-size:12.5px;margin-top:2px}
+  .x{background:none;border:0;color:var(--text-muted);font-size:20px;padding:6px 8px;min-height:38px;flex:none}
+
+  .rule{display:grid;gap:3px;padding:14px 2px;border-top:1px solid var(--line);position:relative}
+  .rule:first-child{border-top:0}
+  .rule .i{font-size:13.5px;color:var(--text-secondary)}
+  .rule .t{font-size:15px;font-weight:500;padding-right:34px}
+  .rule .x{position:absolute;right:-4px;top:10px}
+
+  details{margin-top:12px}
+  summary{cursor:pointer;font-size:14px;color:var(--text-secondary);list-style:none;padding:10px 0;min-height:42px}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:'▸ ';color:var(--text-muted)}
+  details[open] summary::before{content:'▾ '}
+
+  .mcard{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--panel2)}
+  .mhead{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:12px}
+
+  /* до / после */
+  .ba{display:grid;gap:12px}
+  @media(min-width:620px){ .ba{grid-template-columns:1fr 1fr} }
+  .bacol h3{font-size:13px;font-weight:600;margin:0 0 4px;letter-spacing:.02em}
+  .bacol.before h3{color:var(--text-muted)}
+  .bacol.after h3{color:var(--green)}
+  .item{display:flex;gap:10px;align-items:flex-start;padding:11px 2px;border-top:1px solid var(--line);font-size:14px}
+  .item:first-of-type{border-top:0}
+  .item .dt{font-size:11.5px;color:var(--text-muted);flex:none;width:52px;padding-top:2px;font-variant-numeric:tabular-nums}
+  .item .tx{flex:1}
+  .item.auto .tx{color:var(--green)}
+  .item .x{margin-left:auto}
+  .mini{font-size:12px;color:var(--text-muted);margin:6px 0 0}
+  #gate{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;
+    padding:calc(var(--safe-t) + 40px) 18px calc(var(--safe-b) + 40px);display:none}
+  #gate.on{display:block}
+  #gate .box{max-width:420px;margin:0 auto}
+  #gate h1{margin-bottom:10px}
+  #gate .step{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:10px}
+  #gate ol{color:var(--text-secondary);font-size:14px;padding-left:20px;margin:0 0 18px}
+  #gate li{margin-bottom:8px}
+  #gate code{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:13px}
+  .who{font-size:12px;color:var(--text-muted);text-align:center;padding:14px 0 0}
+  .who button{font-size:12px;padding:4px 8px;min-height:auto;background:none;border:0;color:var(--text-muted);text-decoration:underline}
+</style>
+</head>
+<body data-palette="#3987e5,#d95926,#199e70" data-mode="dark">
+
+<div id="gate">
+  <div class="box">
+    <div id="gSetup" style="display:none">
+      <p class="step">Шаг 1 из 2</p>
+      <h1>Подключить базу</h1>
+      <p class="hint">Данные будут лежать в твоём проекте Supabase, не здесь. Нужно один раз вставить две строки из Project Settings → API.</p>
+      <div class="card">
+        <div class="fields">
+          <div><label for="sbUrl">Project URL</label><input type="text" id="sbUrl" placeholder="https://xxxx.supabase.co" autocapitalize="off" autocomplete="off" spellcheck="false"></div>
+          <div><label for="sbKey">anon public key</label><input type="text" id="sbKey" placeholder="eyJhbGciOi..." autocapitalize="off" autocomplete="off" spellcheck="false"></div>
+        </div>
+        <div class="btnrow"><button class="go" id="sbSave">Подключить</button></div>
+        <p class="flash" id="gFlash1"></p>
+      </div>
+      <p class="hint">anon key публичный по замыслу: доступ к строкам закрывает RLS, она привязывает каждую строку к твоему логину.</p>
+    </div>
+
+    <div id="gAuth" style="display:none">
+      <p class="step">Шаг 2 из 2</p>
+      <h1>Вход</h1>
+      <p class="hint">Почта, на неё придёт ссылка. Пароля нет. На телефоне достаточно один раз — сессия сохраняется.</p>
+      <div class="card">
+        <div class="fields">
+          <div><label for="mail">Почта</label><input type="email" id="mail" placeholder="ты@почта" autocapitalize="off" autocomplete="email" spellcheck="false"></div>
+        </div>
+        <div class="btnrow"><button class="go" id="sendLink">Прислать ссылку</button></div>
+        <p class="flash" id="gFlash2"></p>
+      </div>
+      <p class="who"><button id="resetCfg">сменить проект Supabase</button></p>
+    </div>
+
+    <div id="gWait" style="display:none">
+      <h1>Подключаюсь</h1>
+      <p class="hint" id="gWaitMsg">Секунду.</p>
+    </div>
+  </div>
+</div>
+
+<nav>
+  <a href="#now" id="nav-now">Графики</a>
+  <a href="#edit" id="nav-edit">Запись</a>
+  <a href="#rules" id="nav-rules">Правила</a>
+  <a href="#path" id="nav-path">До / после</a>
+</nav>
+
+<div class="wrap">
+
+  <div class="screen" id="s-now">
+    <h1>Кривые результата</h1>
+    <div class="runway" id="runway"></div>
+    <div id="charts"></div>
+  </div>
+
+  <div class="screen" id="s-edit">
+    <h1>Запись недели</h1>
+    <p class="hint">Воскресенье, одна минута. Пустое поле — пропуск, не ноль. Тап по неделе в истории — правка.</p>
+    <div class="card" id="formCard">
+      <div class="fields">
+        <div><label for="d">Неделя <span id="editBadge"></span></label><input type="date" id="d"></div>
+        <div id="valFields" class="fields"></div>
+        <div><label for="note">Одно слово про неделю</label><input type="text" id="note" maxlength="140" placeholder="держался, тяжело в пятницу"></div>
+      </div>
+      <div class="btnrow">
+        <button class="go" id="save">Сохранить</button>
+        <button class="ghost" id="cancel" style="display:none">Отмена</button>
+      </div>
+      <p class="flash" id="flash"></p>
+    </div>
+
+    <h2>История</h2>
+    <div class="card" id="weeks"></div>
+
+    <h2 id="mh">Метрики и цели</h2>
+    <p class="hint">Добавить свою, переименовать, поставить цель с датой или удалить. Каждая метрика сразу появляется полем в форме записи и отдельным графиком.</p>
+    <div id="metricsBox">
+      <div id="metricList"></div>
+      <div class="card">
+        <div class="mhead">Добавить метрику</div>
+        <div class="fields three">
+          <div><label for="nName">Название</label><input type="text" id="nName" maxlength="60" placeholder="Страниц прочитано"></div>
+          <div><label for="nUnit">Ед.</label><input type="text" id="nUnit" maxlength="10" placeholder="стр"></div>
+          <div><label for="nMode">Счёт</label><select id="nMode"><option value="level">уровень</option><option value="sum">накопительно</option></select></div>
+        </div>
+        <div class="btnrow"><button class="go" id="addMetric">Добавить</button></div>
+        <p class="hint" style="margin:10px 0 0">Уровень — пишешь текущее значение: вес, остаток долга. Накопительно — прибавку за неделю, график складывает и не обнуляется: чистые дни, страницы, тренировки.</p>
+        <p class="flash" id="flash3"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="s-rules">
+    <h1>Если — то</h1>
+    <p class="hint">Решение, принятое заранее, чтобы в момент тяги не нужна была воля.</p>
+    <div class="card" id="rulesList"></div>
+    <details>
+      <summary>Добавить правило</summary>
+      <div class="card">
+        <div class="fields">
+          <div><label for="rIf">Если</label><input type="text" id="rIf" maxlength="160" placeholder="вышел с кофе на балкон"></div>
+          <div><label for="rThen">То</label><input type="text" id="rThen" maxlength="200" placeholder="забираю кофе и ухожу внутрь"></div>
+        </div>
+        <div class="btnrow"><button class="go" id="addRule">Добавить</button></div>
+        <p class="flash" id="flash2"></p>
+      </div>
+    </details>
+  </div>
+
+  <div class="screen" id="s-path">
+    <h1>До / после</h1>
+    <p class="hint">Левая половина — то, что ты сюда вписал сам, один раз. Правая заполняется только из данных: цель взята, рубеж пройден. Вручную туда ничего не добавляется.</p>
+    <div class="card" id="lineCard"></div>
+    <div class="ba">
+      <div class="bacol before card">
+        <h3 id="beforeH">До</h3>
+        <p class="mini">Залёты и привычки, которые остаются слева.</p>
+        <div id="beforeList"></div>
+        <div class="fields" style="margin-top:14px">
+          <div><input type="text" id="bText" maxlength="120" placeholder="например: бросал на неделю и возвращался"></div>
+        </div>
+        <div class="btnrow"><button id="addBefore">Добавить в «до»</button></div>
+        <p class="flash" id="flash4"></p>
+      </div>
+      <div class="bacol after card">
+        <h3 id="afterH">После</h3>
+        <p class="mini">Появляется само, когда данные это показывают.</p>
+        <div id="afterList"></div>
+      </div>
+    </div>
+    <p class="who"><span id="whoAmI"></span> <button id="signOut">выйти</button></p>
+  </div>
+</div>
+
+<script type="module">
+(function(){
+  "use strict";
+
+  var COLORS = ["var(--s1)", "var(--s2)", "var(--s3)"];
+  var MS_D = 864e5, MS_M = 30.44 * MS_D;
+  var MILES = [7, 30, 60, 100, 180, 250, 365];
+
+  var metrics = [];   // {id,name,unit,mode,target,tdate,zero,ord}
+  var rows = [];      // {id:'2026-11-22', vals:{<mid>:num}, note}
+  var rules = [], marks = [];
+  var db = null, editing = null;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var el = function(tag, cls, txt){
+    var n = document.createElement(tag);
+    if(cls) n.className = cls;
+    if(txt !== undefined) n.textContent = txt;
+    return n;
+  };
+  var MON = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+  var fmtN = function(n){
+    if(n === null || n === undefined || n === "" || !isFinite(n)) return "—";
+    var a = Math.abs(n);
+    if(a >= 1000) return Math.round(n).toLocaleString("ru-RU");
+    return String(Math.round(n * 10) / 10).replace(".", ",");
+  };
+  var sgn = function(n){ return (n > 0 ? "+" : "−") + fmtN(Math.abs(n)); };
+  var fmtD = function(iso){
+    var p = String(iso).split("-");
+    return p.length === 3 ? (Number(p[2]) + " " + MON[Number(p[1]) - 1]) : String(iso);
+  };
+  var plural = function(n, a, b, c){
+    var m = n % 100, k = n % 10;
+    if(m > 10 && m < 20) return c;
+    if(k === 1) return a;
+    if(k >= 2 && k <= 4) return b;
+    return c;
+  };
+  var lastSunday = function(){
+    var d = new Date();
+    d.setDate(d.getDate() - d.getDay());
+    return d.toISOString().slice(0, 10);
+  };
+  var byOrd = function(a, b){ return (a.ord || 0) - (b.ord || 0); };
+  var sortedRows = function(){ return rows.slice().sort(function(a,b){ return a.id < b.id ? -1 : 1; }); };
+  var colorOf = function(i){ return COLORS[i % COLORS.length]; };
+  var ordered = function(){ return metrics.slice().sort(byOrd); };
+
+  /* ───────── серии и цели ───────── */
+  function series(m){
+    var src = sortedRows(), out = [], acc = 0;
+    for(var i = 0; i < src.length; i++){
+      var v = src[i].vals ? src[i].vals[m.id] : undefined;
+      if(v === null || v === undefined || v === "" || !isFinite(v)) continue;
+      if(m.mode === "sum"){ acc += Number(v); out.push({x:src[i].id, y:acc, raw:Number(v), note:src[i].note}); }
+      else out.push({x:src[i].id, y:Number(v), note:src[i].note});
+    }
+    return out;
+  }
+
+  function goalCalc(m, pts){
+    var G = {has:false, tone:"", verdict:"", needPerMonth:null, actualPerMonth:null, target:null, tdate:"", done:false};
+    var t = m.target, td = m.tdate;
+    if(t === null || t === undefined || t === "" || !isFinite(t) || !td) return G;
+    G.has = true; G.target = Number(t); G.tdate = td;
+    var now = Date.now(), tEnd = Date.parse(td), monthsLeft = (tEnd - now) / MS_M;
+    var cur = pts.length ? pts[pts.length - 1].y : null;
+    if(cur === null){
+      G.tone = "neutral";
+      G.verdict = monthsLeft > 0 ? ("осталось " + fmtN(monthsLeft) + " мес, нужна первая запись") : "срок прошёл";
+      return G;
+    }
+    var need = G.target - cur;
+    if(monthsLeft > 0.1) G.needPerMonth = need / monthsLeft;
+    var rate = null;
+    if(pts.length > 1){
+      var days = (Date.parse(pts[pts.length - 1].x) - Date.parse(pts[0].x)) / MS_D;
+      if(days > 0){ rate = (pts[pts.length - 1].y - pts[0].y) / days; G.actualPerMonth = rate * 30.44; }
+    }
+    var start = pts[0].y;
+    var reached = (G.target >= start) ? (cur >= G.target) : (cur <= G.target);
+    if(reached){ G.tone = "good"; G.verdict = "цель взята"; G.done = true; return G; }
+    if(monthsLeft <= 0){ G.tone = "bad"; G.verdict = "срок прошёл, осталось " + sgn(need) + " " + m.unit; return G; }
+    if(rate === null){ G.tone = "neutral"; G.verdict = "темп появится со второй записи"; return G; }
+    if(rate === 0 || (rate > 0) !== (need > 0)){ G.tone = "bad"; G.verdict = "текущий темп к цели не ведёт"; return G; }
+    var proj = now + (need / rate) * MS_D, diffW = (proj - tEnd) / (7 * MS_D);
+    var pIso = new Date(proj).toISOString().slice(0, 10);
+    if(diffW <= 0.5){
+      G.tone = "good";
+      G.verdict = "при этом темпе " + fmtD(pIso) + ", успеваешь" + (diffW < -1 ? ", на " + fmtN(-diffW) + " нед раньше" : "");
+    }else{
+      G.tone = diffW > 8 ? "bad" : "warn";
+      G.verdict = "при этом темпе " + fmtD(pIso) + ", позже на " + fmtN(diffW) + " нед";
+    }
+    return G;
+  }
+
+  /* ───────── график ───────── */
+  function drawChart(m, idx){
+    var color = colorOf(idx), pts = series(m);
+    var card = el("div", "chart");
+    var head = el("div", "chead");
+    var t = el("div", "ctitle");
+    var sw = el("span", "swatch"); sw.style.background = color;
+    t.appendChild(sw); t.appendChild(document.createTextNode(m.name));
+    head.appendChild(t);
+    if(pts.length){
+      var now = el("div", "cnow");
+      now.appendChild(el("b", null, fmtN(pts[pts.length - 1].y)));
+      now.appendChild(document.createTextNode(" " + m.unit));
+      if(m.mode === "sum")
+        now.appendChild(el("span", "cdelta", "накопительно, " + pts.length + " " + plural(pts.length, "запись", "записи", "записей")));
+      else if(pts.length > 1)
+        now.appendChild(el("span", "cdelta", sgn(pts[pts.length - 1].y - pts[0].y) + " от старта"));
+      head.appendChild(now);
+    }
+    card.appendChild(head);
+
+    var G = goalCalc(m, pts);
+    if(G.has){
+      var vd = el("div", "verdict " + G.tone);
+      var parts = [];
+      if(!G.done && G.needPerMonth !== null) parts.push("нужно " + sgn(G.needPerMonth) + " " + m.unit + "/мес");
+      if(!G.done && G.actualPerMonth !== null) parts.push("по факту " + sgn(G.actualPerMonth));
+      vd.textContent = parts.join("  ·  ");
+      vd.appendChild(el("span", "vtail", G.verdict));
+      card.appendChild(vd);
+    }
+    if(!pts.length){
+      card.appendChild(el("div", "empty", G.has
+        ? ("Цель " + fmtN(G.target) + " " + m.unit + " к " + fmtD(G.tdate) + ". Первая запись задаст точку отсчёта.")
+        : "Пока пусто. Первая запись задаст точку отсчёта."));
+      return card;
+    }
+
+    var W = 760, H = 180, L = 52, R = 14, T = 20, B = 26;
+    var iw = W - L - R, ih = H - T - B;
+    var ys = pts.map(function(p){ return p.y; });
+    var lo = Math.min.apply(null, ys), hi = Math.max.apply(null, ys);
+    if(m.zero){ lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+    if(G.has){ lo = Math.min(lo, G.target); hi = Math.max(hi, G.target); }
+    if(lo === hi){ lo -= 1; hi += 1; }
+    var pd = (hi - lo) * 0.14; lo -= pd; hi += pd;
+    var xs = pts.map(function(p){ return Date.parse(p.x); });
+    var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+    if(G.has) x1 = Math.max(x1, Date.parse(G.tdate));
+    if(x0 === x1){ x0 -= 6048e5; x1 += 6048e5; }
+    var X = function(v){ return L + (Date.parse(v) - x0) / (x1 - x0) * iw; };
+    var Y = function(v){ return T + (hi - v) / (hi - lo) * ih; };
+
+    var NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("class", "plot");
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", m.name + ": результат по неделям");
+    var s = function(n, a){
+      var o = document.createElementNS(NS, n);
+      for(var k in a) o.setAttribute(k, a[k]);
+      return o;
+    };
+    var txt = function(a, str){
+      var o = s("text", a); o.setAttribute("font-family", "Inter,sans-serif"); o.textContent = str; return o;
+    };
+    for(var g = 0; g <= 2; g++){
+      var gv = lo + (hi - lo) * g / 2, gy = Y(gv);
+      svg.appendChild(s("line", {x1:L, x2:W - R, y1:gy, y2:gy, stroke:"var(--grid)", "stroke-width":1}));
+      svg.appendChild(txt({x:L - 8, y:gy + 4, "text-anchor":"end", fill:"var(--text-muted)", "font-size":11}, fmtN(gv)));
+    }
+    if(m.zero && lo < 0 && hi > 0){
+      var zy = Y(0);
+      svg.appendChild(s("line", {x1:L, x2:W - R, y1:zy, y2:zy, stroke:"var(--text-muted)", "stroke-width":1, "stroke-dasharray":"3 3"}));
+      svg.appendChild(txt({x:W - R, y:zy - 5, "text-anchor":"end", fill:"var(--text-muted)", "font-size":10}, "0"));
+    }
+    if(G.has){
+      var tx = X(G.tdate), ty = Y(G.target);
+      svg.appendChild(s("line", {x1:X(pts[0].x), y1:Y(pts[0].y), x2:tx, y2:ty, stroke:"#555c68", "stroke-width":1.5, "stroke-dasharray":"5 4"}));
+      svg.appendChild(s("line", {x1:tx, y1:T, x2:tx, y2:T + ih, stroke:"#39404b", "stroke-width":1}));
+      svg.appendChild(s("circle", {cx:tx, cy:ty, r:3.5, fill:"var(--surface-1)", stroke:"#7d8694", "stroke-width":1.5}));
+      svg.appendChild(txt({x:tx - 7, y:ty - 8, "text-anchor":"end", fill:"#8c95a3", "font-size":10}, "план"));
+      svg.appendChild(txt({x:tx, y:T - 7, "text-anchor":"end", fill:"var(--text-secondary)", "font-size":10}, "цель " + fmtN(G.target) + " · " + fmtD(G.tdate)));
+    }
+    svg.appendChild(txt({x:L, y:H - 7, fill:"var(--text-muted)", "font-size":11}, fmtD(pts[0].x)));
+    var endIso = (G.has && Date.parse(G.tdate) >= Date.parse(pts[pts.length - 1].x)) ? G.tdate : pts[pts.length - 1].x;
+    if(pts.length > 1 || G.has)
+      svg.appendChild(txt({x:W - R, y:H - 7, "text-anchor":"end", fill:"var(--text-muted)", "font-size":11}, fmtD(endIso)));
+    var d = pts.map(function(p, i){ return (i ? "L" : "M") + X(p.x).toFixed(1) + " " + Y(p.y).toFixed(1); }).join(" ");
+    svg.appendChild(s("path", {d:d, fill:"none", stroke:color, "stroke-width":2, "stroke-linecap":"round", "stroke-linejoin":"round"}));
+    pts.forEach(function(p){
+      svg.appendChild(s("circle", {cx:X(p.x), cy:Y(p.y), r:4, fill:color, stroke:"var(--surface-1)", "stroke-width":2}));
+    });
+    var hair = s("line", {x1:0, x2:0, y1:T, y2:T + ih, stroke:"#454c57", "stroke-width":1, opacity:0});
+    var dot = s("circle", {r:5.5, fill:color, stroke:"var(--surface-1)", "stroke-width":2, opacity:0});
+    svg.appendChild(hair); svg.appendChild(dot);
+    card.appendChild(svg);
+    var tip = el("div", "tip");
+    card.appendChild(tip);
+    function move(ev){
+      var r = svg.getBoundingClientRect();
+      var px = (ev.clientX - r.left) / r.width * W, best = 0, bd = Infinity;
+      pts.forEach(function(p, i){ var dd = Math.abs(X(p.x) - px); if(dd < bd){ bd = dd; best = i; } });
+      var p = pts[best], cx = X(p.x), cy = Y(p.y);
+      hair.setAttribute("x1", cx); hair.setAttribute("x2", cx); hair.setAttribute("opacity", 1);
+      dot.setAttribute("cx", cx); dot.setAttribute("cy", cy); dot.setAttribute("opacity", 1);
+      tip.textContent = "";
+      tip.appendChild(el("b", null, fmtN(p.y) + " " + m.unit));
+      var k = el("span", "key"); k.style.background = color;
+      tip.appendChild(k);
+      tip.appendChild(document.createTextNode(fmtD(p.x) + (p.raw !== undefined ? "  ·  за неделю +" + fmtN(p.raw) : "")));
+      if(p.note){
+        var nb = el("div", null, p.note);
+        nb.style.color = "var(--text-muted)"; nb.style.marginTop = "3px";
+        tip.appendChild(nb);
+      }
+      tip.style.opacity = 1;
+      var left = cx / W * r.width + 14;
+      if(left > r.width - 140) left = cx / W * r.width - tip.offsetWidth - 14;
+      tip.style.left = Math.max(4, left) + "px";
+      tip.style.top = Math.max(2, cy / H * r.height - 12) + "px";
+    }
+    svg.addEventListener("pointermove", move);
+    svg.addEventListener("pointerdown", move);
+    svg.addEventListener("pointerleave", function(){
+      tip.style.opacity = 0; hair.setAttribute("opacity", 0); dot.setAttribute("opacity", 0);
+    });
+    return card;
+  }
+
+  /* ───────── достижения из данных ───────── */
+  function achievements(){
+    var out = [];
+    ordered().forEach(function(m){
+      var pts = series(m);
+      if(!pts.length) return;
+      if(m.target !== null && m.target !== undefined && m.target !== "" && isFinite(m.target)){
+        var tg = Number(m.target), start = pts[0].y, up = tg >= start, hit = null;
+        for(var i = 0; i < pts.length; i++){
+          if(up ? pts[i].y >= tg : pts[i].y <= tg){ hit = pts[i]; break; }
+        }
+        if(hit) out.push({date:hit.x, text:"Цель взята: " + m.name + " " + fmtN(tg) + " " + m.unit});
+      }
+      if(m.zero){
+        var z = null;
+        for(var j = 0; j < pts.length; j++){ if(pts[j].y >= 0){ z = pts[j]; break; } }
+        if(z) out.push({date:z.x, text:m.name + ": вышел из минуса"});
+      }
+      if(m.mode === "sum"){
+        MILES.forEach(function(ms){
+          var h = null;
+          for(var k = 0; k < pts.length; k++){ if(pts[k].y >= ms){ h = pts[k]; break; } }
+          if(h) out.push({date:h.x, text:ms + " " + m.unit + ": " + m.name.toLowerCase()});
+        });
+      }
+    });
+    var seen = {};
+    return out.filter(function(a){
+      var key = a.date + "|" + a.text;
+      if(seen[key]) return false;
+      seen[key] = 1;
+      return true;
+    }).sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+  }
+
+  function pivotDate(){
+    var r = sortedRows();
+    return r.length ? r[0].id : new Date().toISOString().slice(0, 10);
+  }
+
+  function drawLine(){
+    var box = $("lineCard");
+    box.textContent = "";
+    var acts = achievements(), piv = pivotDate();
+    var dates = ordered().map(function(m){ return m.tdate; }).filter(Boolean).sort();
+    var endIso = dates.length ? dates[dates.length - 1] : null;
+    var NS = "http://www.w3.org/2000/svg";
+    var W = 760, H = 132, MID = W / 2, YL = 66;
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    svg.setAttribute("class", "plot");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "Линия до и после, точка перелома " + fmtD(piv));
+    var s = function(n, a){
+      var o = document.createElementNS(NS, n);
+      for(var k in a) o.setAttribute(k, a[k]);
+      return o;
+    };
+    var txt = function(a, str){
+      var o = s("text", a); o.setAttribute("font-family", "Inter,sans-serif"); o.textContent = str; return o;
+    };
+    svg.appendChild(s("line", {x1:24, x2:MID, y1:YL, y2:YL, stroke:"#3a4049", "stroke-width":2, "stroke-linecap":"round"}));
+    svg.appendChild(s("line", {x1:MID, x2:W - 24, y1:YL, y2:YL, stroke:"var(--s3)", "stroke-width":2, "stroke-linecap":"round"}));
+    svg.appendChild(s("line", {x1:MID, x2:MID, y1:YL - 17, y2:YL + 17, stroke:"var(--amber)", "stroke-width":2.5, "stroke-linecap":"round"}));
+    svg.appendChild(txt({x:MID, y:YL + 34, "text-anchor":"middle", fill:"var(--amber)", "font-size":11, "font-weight":600}, fmtD(piv)));
+    var tl = s("text", {x:24, y:YL - 26, fill:"var(--text-muted)", "font-size":15});
+    tl.setAttribute("font-family", "'Instrument Serif',Georgia,serif");
+    tl.textContent = "Серёжа: до";
+    svg.appendChild(tl);
+    var tr = s("text", {x:W - 24, y:YL - 26, "text-anchor":"end", fill:"var(--text-primary)", "font-size":15});
+    tr.setAttribute("font-family", "'Instrument Serif',Georgia,serif");
+    tr.textContent = "Серёжа: после";
+    svg.appendChild(tr);
+    var bcount = marks.filter(function(x){ return x.side === "before"; }).length;
+    if(bcount) svg.appendChild(txt({x:24, y:YL + 24, fill:"var(--text-muted)", "font-size":11}, bcount + " " + plural(bcount, "запись", "записи", "записей")));
+    if(endIso){
+      var p0 = Date.parse(piv), p1 = Date.parse(endIso);
+      if(p1 > p0){
+        acts.forEach(function(a){
+          var frac = (Date.parse(a.date) - p0) / (p1 - p0);
+          if(frac < 0) frac = 0; if(frac > 1) frac = 1;
+          var cx = MID + frac * (W - 24 - MID);
+          svg.appendChild(s("circle", {cx:cx, cy:YL, r:4.5, fill:"var(--s3)", stroke:"var(--surface-1)", "stroke-width":2}));
+        });
+        svg.appendChild(s("circle", {cx:W - 24, cy:YL, r:3.5, fill:"var(--surface-1)", stroke:"var(--s3)", "stroke-width":1.5}));
+        svg.appendChild(txt({x:W - 24, y:YL + 24, "text-anchor":"end", fill:"var(--text-muted)", "font-size":11}, fmtD(endIso)));
+      }
+    }
+    if(!acts.length) svg.appendChild(txt({x:MID + 16, y:YL - 8, fill:"var(--text-muted)", "font-size":11}, "здесь появятся взятые цели"));
+    box.appendChild(svg);
+  }
+
+  function renderPath(){
+    drawLine();
+    var bl = $("beforeList");
+    bl.textContent = "";
+    var befores = marks.filter(function(x){ return x.side === "before"; }).sort(byOrd);
+    if(!befores.length) bl.appendChild(el("p", "hint", "Пока пусто."));
+    befores.forEach(function(mk){
+      var it = el("div", "item");
+      it.appendChild(el("div", "tx", mk.text));
+      var x = el("button", "x", "×");
+      x.setAttribute("aria-label", "удалить");
+      x.addEventListener("click", function(){ delMark(mk.id); });
+      it.appendChild(x);
+      bl.appendChild(it);
+    });
+    var al = $("afterList");
+    al.textContent = "";
+    var acts = achievements();
+    if(!acts.length){
+      al.appendChild(el("p", "hint", "Пусто, пока данные ничего не показывают. Первая отметка появится, когда будет взят первый рубеж."));
+    }else{
+      acts.slice().reverse().forEach(function(a){
+        var it = el("div", "item auto");
+        it.appendChild(el("div", "dt", fmtD(a.date)));
+        it.appendChild(el("div", "tx", a.text));
+        al.appendChild(it);
+      });
+    }
+    $("beforeH").textContent = "До · " + befores.length;
+    $("afterH").textContent = "После · " + acts.length;
+  }
+
+  /* ───────── экраны ───────── */
+  function renderRunway(){
+    var box = $("runway");
+    box.textContent = "";
+    var dates = ordered().map(function(m){ return m.tdate; }).filter(Boolean).sort();
+    if(!dates.length){
+      box.appendChild(el("span", null, "Поставь цели и даты в «Метрики и цели» — появится обратный отсчёт."));
+      return;
+    }
+    var end = dates[dates.length - 1];
+    var days = Math.round((Date.parse(end) - Date.now()) / MS_D);
+    box.appendChild(el("b", null, days > 0 ? String(days) : "0"));
+    box.appendChild(el("span", null, plural(Math.max(days, 0), "день", "дня", "дней") + " до " + fmtD(end) +
+      (days > 0 ? "  ·  " + Math.floor(days / 7) + " " + plural(Math.floor(days / 7), "неделя", "недели", "недель") : "")));
+  }
+
+  function renderCharts(){
+    renderRunway();
+    var host = $("charts");
+    host.textContent = "";
+    var list = ordered();
+    if(!list.length){
+      host.appendChild(el("p", "hint", "Метрик нет. Добавь их на экране «Запись»."));
+      return;
+    }
+    list.forEach(function(m, i){ host.appendChild(drawChart(m, i)); });
+  }
+
+  function renderFields(){
+    var box = $("valFields");
+    if(document.activeElement && /^f_/.test(document.activeElement.id || "")) return;
+    var keep = {};
+    Array.prototype.forEach.call(box.querySelectorAll("input"), function(inp){ keep[inp.id] = inp.value; });
+    box.textContent = "";
+    var list = ordered();
+    var grid = el("div", list.length > 1 ? "fields two" : "fields");
+    box.appendChild(grid);
+    list.forEach(function(m){
+      var cell = el("div");
+      var lb = el("label", null, m.name + (m.mode === "sum" ? " \u00B7 за неделю" : "") + ", " + m.unit);
+      lb.setAttribute("for", "f_" + m.id);
+      var inp = el("input");
+      inp.type = "number"; inp.step = "any"; inp.inputMode = "decimal"; inp.id = "f_" + m.id;
+      if(keep["f_" + m.id] !== undefined) inp.value = keep["f_" + m.id];
+      if(m.mode === "sum") inp.placeholder = "за неделю";
+      cell.appendChild(lb); cell.appendChild(inp);
+      grid.appendChild(cell);
+    });
+    $("editBadge").textContent = "";
+    if(editing){
+      $("editBadge").appendChild(el("span", "badge", "правка " + fmtD(editing)));
+      $("formCard").classList.add("editing");
+      $("cancel").style.display = "block";
+    }else{
+      $("formCard").classList.remove("editing");
+      $("cancel").style.display = "none";
+    }
+  }
+
+  function renderWeeks(){
+    var box = $("weeks");
+    box.textContent = "";
+    if(!rows.length){
+      box.appendChild(el("p", "hint", "Записей пока нет. Первая задаст точку отсчёта."));
+      return;
+    }
+    sortedRows().reverse().forEach(function(r){
+      var row = el("div", "wk");
+      row.appendChild(el("div", "d", fmtD(r.id)));
+      var v = el("div", "vals"), bits = [];
+      ordered().forEach(function(m){
+        var val = r.vals ? r.vals[m.id] : undefined;
+        if(val === null || val === undefined || val === "") return;
+        bits.push(fmtN(val) + " " + m.unit);
+      });
+      v.appendChild(document.createTextNode(bits.length ? bits.join("   ·   ") : "—"));
+      if(r.note) v.appendChild(el("span", "nt", r.note));
+      row.appendChild(v);
+      var x = el("button", "x", "×");
+      x.setAttribute("aria-label", "удалить запись " + fmtD(r.id));
+      x.addEventListener("click", function(ev){ ev.stopPropagation(); delWeek(r.id); });
+      row.appendChild(x);
+      row.addEventListener("click", function(){ loadForEdit(r); });
+      box.appendChild(row);
+    });
+  }
+
+  function renderMetricList(){
+    var box = $("metricList");
+    if(document.activeElement && /^(mn|mu|mm|mt|md|mz)_/.test(document.activeElement.id || "")) return;
+    box.textContent = "";
+    ordered().forEach(function(m, i){
+      var c = el("div", "mcard");
+      var h = el("div", "mhead");
+      var sw = el("span", "swatch"); sw.style.background = colorOf(i);
+      h.appendChild(sw); h.appendChild(document.createTextNode(m.name));
+      c.appendChild(h);
+      var f1 = el("div", "fields three");
+      var a = el("div");
+      a.appendChild(el("label", null, "Название"));
+      var ni = el("input"); ni.type = "text"; ni.id = "mn_" + m.id; ni.value = m.name; ni.maxLength = 60;
+      a.appendChild(ni);
+      var b = el("div");
+      b.appendChild(el("label", null, "Ед."));
+      var ui = el("input"); ui.type = "text"; ui.id = "mu_" + m.id; ui.value = m.unit; ui.maxLength = 10;
+      b.appendChild(ui);
+      var cc = el("div");
+      cc.appendChild(el("label", null, "Счёт"));
+      var se = el("select"); se.id = "mm_" + m.id;
+      [["level","уровень"],["sum","накопительно"]].forEach(function(o){
+        var op = el("option", null, o[1]); op.value = o[0]; se.appendChild(op);
+      });
+      se.value = m.mode === "sum" ? "sum" : "level";
+      cc.appendChild(se);
+      f1.appendChild(a); f1.appendChild(b); f1.appendChild(cc);
+      c.appendChild(f1);
+      var f2 = el("div", "fields two");
+      f2.style.marginTop = "12px";
+      var d1 = el("div");
+      d1.appendChild(el("label", null, "Цель, " + m.unit));
+      var ti = el("input"); ti.type = "number"; ti.step = "any"; ti.inputMode = "decimal"; ti.id = "mt_" + m.id;
+      ti.value = (m.target === null || m.target === undefined) ? "" : m.target;
+      d1.appendChild(ti);
+      var d2 = el("div");
+      d2.appendChild(el("label", null, "К дате"));
+      var di = el("input"); di.type = "date"; di.id = "md_" + m.id; di.value = m.tdate || "";
+      d2.appendChild(di);
+      f2.appendChild(d1); f2.appendChild(d2);
+      c.appendChild(f2);
+      var row = el("div", "btnrow");
+      var sb = el("button", "go", "Сохранить");
+      sb.addEventListener("click", function(){ saveMetric(m.id); });
+      var db2 = el("button", "danger", "Удалить");
+      db2.addEventListener("click", function(){ delMetric(m.id); });
+      row.appendChild(sb); row.appendChild(db2);
+      c.appendChild(row);
+      box.appendChild(c);
+    });
+  }
+
+  function renderRules(){
+    var box = $("rulesList");
+    box.textContent = "";
+    if(!rules.length){
+      box.appendChild(el("p", "hint", "Пока пусто. Добавь первое правило ниже."));
+      return;
+    }
+    rules.slice().sort(byOrd).forEach(function(r){
+      var w = el("div", "rule");
+      w.appendChild(el("div", "i", "если " + r.ifs));
+      w.appendChild(el("div", "t", "то " + r.thens));
+      var x = el("button", "x", "×");
+      x.setAttribute("aria-label", "удалить правило");
+      x.addEventListener("click", function(){ delRule(r.id); });
+      w.appendChild(x);
+      box.appendChild(w);
+    });
+  }
+
+  function render(){
+    renderCharts();
+    renderFields();
+    renderWeeks();
+    renderMetricList();
+    renderRules();
+    renderPath();
+  }
+
+  /* ───────── действия ───────── */
+  function flash(id, msg, warn){
+    var f = $(id);
+    if(!f) return;
+    f.textContent = msg;
+    f.className = warn ? "flash warn" : "flash";
+    if(msg) setTimeout(function(){ if(f.textContent === msg) f.textContent = ""; }, 4000);
+  }
+
+  function loadForEdit(r){
+    editing = r.id;
+    $("d").value = r.id;
+    ordered().forEach(function(m){
+      var inp = $("f_" + m.id);
+      if(!inp) return;
+      var v = r.vals ? r.vals[m.id] : undefined;
+      inp.value = (v === null || v === undefined) ? "" : v;
+    });
+    $("note").value = r.note || "";
+    renderFields();
+    ordered().forEach(function(m){
+      var inp = $("f_" + m.id);
+      if(!inp) return;
+      var v = r.vals ? r.vals[m.id] : undefined;
+      inp.value = (v === null || v === undefined) ? "" : v;
+    });
+    location.hash = "#edit";
+    $("formCard").scrollIntoView({behavior:"smooth", block:"start"});
+  }
+
+  function resetForm(){
+    editing = null;
+    $("d").value = lastSunday();
+    ordered().forEach(function(m){ var i = $("f_" + m.id); if(i) i.value = ""; });
+    $("note").value = "";
+    renderFields();
+  }
+
+  async function save(){
+    var id = $("d").value;
+    if(!id){ flash("flash", "Поставь дату", true); return; }
+    var vals = {}, any = false;
+    ordered().forEach(function(m){
+      var inp = $("f_" + m.id);
+      if(!inp) return;
+      var v = inp.value.trim();
+      if(v === ""){ vals[m.id] = null; return; }
+      vals[m.id] = Number(v.replace(",", "."));
+      any = true;
+    });
+    var note = $("note").value.trim();
+    if(!any && !note){ flash("flash", "Всё пустое", true); return; }
+    var wasEdit = editing === id;
+    if(editing && editing !== id){
+      var old = editing;
+      rows = rows.filter(function(r){ return r.id !== old; });
+      if(db){ try{ await db.collection("weeks").doc(old).delete(); }catch(e){} }
+    }
+    var rec = {id:id, vals:vals, note:note};
+    var found = -1;
+    for(var j = 0; j < rows.length; j++) if(rows[j].id === id) found = j;
+    if(found >= 0){
+      var merged = {};
+      var prev = rows[found].vals || {};
+      for(var k in prev) merged[k] = prev[k];
+      for(var k2 in vals) merged[k2] = vals[k2];
+      rec.vals = merged;
+      rows[found] = rec;
+    }else rows.push(rec);
+    resetForm();
+    render();
+    if(db){
+      try{
+        var payload = {note:rec.note};
+        for(var kk in rec.vals) payload[kk] = rec.vals[kk];
+        await db.collection("weeks").doc(id).set(payload);
+        flash("flash", wasEdit ? "Изменено" : "Записано");
+      }catch(e){ flash("flash", "Сохранилось только в этом окне", true); }
+    }else flash("flash", "Сохранено только в этом окне", true);
+  }
+
+  async function delWeek(id){
+    rows = rows.filter(function(r){ return r.id !== id; });
+    if(editing === id) resetForm();
+    render();
+    if(db){ try{ await db.collection("weeks").doc(id).delete(); }catch(e){} }
+  }
+
+  async function addMetric(){
+    var name = $("nName").value.trim();
+    if(!name){ flash("flash3", "Нужно название", true); return; }
+    if(metrics.length >= 8){ flash("flash3", "Восьми метрик уже много, это снова превратится в чеклист", true); return; }
+    var id = "m" + Date.now();
+    var rec = {id:id, name:name, unit:$("nUnit").value.trim() || "шт",
+      mode:$("nMode").value === "sum" ? "sum" : "level",
+      target:null, tdate:"", zero:false, ord:Date.now()};
+    metrics.push(rec);
+    $("nName").value = ""; $("nUnit").value = "";
+    render();
+    if(db){ try{ await db.collection("metrics").doc(id).set(strip(rec)); flash("flash3", "Добавлено"); return; }catch(e){} }
+    flash("flash3", "Только в этом окне", true);
+  }
+
+  function strip(m){
+    return {name:m.name, unit:m.unit, mode:m.mode, target:m.target, tdate:m.tdate, zero:!!m.zero, ord:m.ord || 0};
+  }
+
+  async function saveMetric(id){
+    var m = null;
+    metrics.forEach(function(x){ if(x.id === id) m = x; });
+    if(!m) return;
+    m.name = ($("mn_" + id).value || "").trim() || m.name;
+    m.unit = ($("mu_" + id).value || "").trim() || m.unit;
+    m.mode = $("mm_" + id).value === "sum" ? "sum" : "level";
+    var tv = ($("mt_" + id).value || "").trim();
+    m.target = tv === "" ? null : Number(tv.replace(",", "."));
+    m.tdate = $("md_" + id).value || "";
+    if(m.target !== null && m.target !== undefined) m.zero = (m.target === 0) || !!m.zero;
+    render();
+    if(db){ try{ await db.collection("metrics").doc(id).set(strip(m)); flash("flash3", "Сохранено"); return; }catch(e){} }
+    flash("flash3", "Только в этом окне", true);
+  }
+
+  async function delMetric(id){
+    metrics = metrics.filter(function(m){ return m.id !== id; });
+    render();
+    if(db){ try{ await db.collection("metrics").doc(id).delete(); }catch(e){} }
+  }
+
+  async function addRule(){
+    var i = $("rIf").value.trim(), t = $("rThen").value.trim();
+    if(!i || !t){ flash("flash2", "Заполни оба поля", true); return; }
+    var id = "r" + Date.now();
+    rules.push({id:id, ifs:i, thens:t, ord:Date.now()});
+    $("rIf").value = ""; $("rThen").value = "";
+    renderRules();
+    if(db){ try{ await db.collection("rules").doc(id).set({ifs:i, thens:t, ord:Date.now()}); flash("flash2", "Добавлено"); return; }catch(e){} }
+    flash("flash2", "Только в этом окне", true);
+  }
+
+  async function delRule(id){
+    rules = rules.filter(function(r){ return r.id !== id; });
+    renderRules();
+    if(db){ try{ await db.collection("rules").doc(id).delete(); }catch(e){} }
+  }
+
+  async function addBefore(){
+    var t = $("bText").value.trim();
+    if(!t){ flash("flash4", "Пустое поле", true); return; }
+    var id = "b" + Date.now();
+    marks.push({id:id, side:"before", text:t, ord:Date.now()});
+    $("bText").value = "";
+    renderPath();
+    if(db){ try{ await db.collection("marks").doc(id).set({side:"before", text:t, ord:Date.now()}); flash("flash4", "Добавлено"); return; }catch(e){} }
+    flash("flash4", "Только в этом окне", true);
+  }
+
+  async function delMark(id){
+    marks = marks.filter(function(x){ return x.id !== id; });
+    renderPath();
+    if(db){ try{ await db.collection("marks").doc(id).delete(); }catch(e){} }
+  }
+
+  /* ───────── роутер и данные ───────── */
+  var SCREENS = ["now","edit","rules","path"];
+  function route(){
+    var h = (location.hash || "").replace("#", "");
+    if(SCREENS.indexOf(h) < 0) h = "now";
+    SCREENS.forEach(function(k){
+      $("s-" + k).classList.toggle("on", k === h);
+      $("nav-" + k).classList.toggle("on", k === h);
+    });
+    window.scrollTo(0, 0);
+  }
+
+  function docsOf(snap){
+    var out = [];
+    if(!snap) return out;
+    var list = snap.docs || (Array.isArray(snap) ? snap : null);
+    if(!list) return out;
+    list.forEach(function(dc){
+      var data = (typeof dc.data === "function") ? dc.data() : (dc.data || {});
+      out.push({id:dc.id, data:data});
+    });
+    return out;
+  }
+
+  async function boot(){
+    route();
+    resetForm();
+    render();
+    window.addEventListener("hashchange", route);
+    $("save").addEventListener("click", save);
+    $("cancel").addEventListener("click", function(){ resetForm(); render(); });
+    $("addMetric").addEventListener("click", addMetric);
+    $("addRule").addEventListener("click", addRule);
+    $("addBefore").addEventListener("click", addBefore);
+    $("note").addEventListener("keydown", function(e){ if(e.key === "Enter") save(); });
+    $("bText").addEventListener("keydown", function(e){ if(e.key === "Enter") addBefore(); });
+    wireGate();
+
+    initBackend();
+  }
+
+  /* ───────── Supabase ───────── */
+  var sb = null, uid = null, subs = {};
+  var TABLES = ["metrics", "weeks", "rules", "marks"];
+  var LS = {
+    get: function(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+    set: function(k, v){ try{ localStorage.setItem(k, v); }catch(e){} },
+    del: function(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  };
+
+  function gate(which, msg){
+    var g = $("gate");
+    ["gSetup","gAuth","gWait"].forEach(function(k){ $(k).style.display = (k === which) ? "block" : "none"; });
+    if(which){ g.classList.add("on"); } else { g.classList.remove("on"); }
+    if(msg) $("gWaitMsg").textContent = msg;
+  }
+
+  function makeStore(){
+    function pack(name, id, obj){
+      var row = {user_id: uid};
+      if(name === "weeks"){
+        var vals = {};
+        for(var k in obj) if(k !== "note") vals[k] = obj[k];
+        row.d = id; row.vals = vals; row.note = obj.note || "";
+      }else{
+        row.id = id;
+        for(var k2 in obj) row[k2] = obj[k2];
+        if(name === "metrics" && (row.tdate === "" || row.tdate === undefined)) row.tdate = null;
+      }
+      return row;
+    }
+    return {
+      collection: function(name){
+        return {
+          doc: function(id){
+            return {
+              set: async function(obj){
+                var conflict = name === "weeks" ? "user_id,d" : "user_id,id";
+                var r = await sb.from(name).upsert(pack(name, id, obj), {onConflict: conflict});
+                if(r.error) throw r.error;
+                return true;
+              },
+              delete: async function(){
+                var q = sb.from(name).delete().eq("user_id", uid);
+                q = (name === "weeks") ? q.eq("d", id) : q.eq("id", id);
+                var r = await q;
+                if(r.error) throw r.error;
+                return true;
+              }
+            };
+          },
+          onSnapshot: function(cb){ subs[name] = cb; }
+        };
+      }
+    };
+  }
+
+  async function loadAll(){
+    for(var i = 0; i < TABLES.length; i++){
+      var name = TABLES[i];
+      var r = await sb.from(name).select("*").eq("user_id", uid);
+      if(r.error){ flash("flash", "Не читается таблица " + name + ": " + r.error.message, true); continue; }
+      var docs = (r.data || []).map(function(row){
+        if(name === "weeks"){
+          var data = {};
+          var v = row.vals || {};
+          for(var k in v) data[k] = v[k];
+          data.note = row.note || "";
+          return {id: row.d, data: data};
+        }
+        return {id: row.id, data: row};
+      });
+      if(subs[name]) subs[name]({docs: docs});
+    }
+  }
+
+  async function connect(url, key){
+    var mod = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+    sb = mod.createClient(url, key, {auth:{persistSession:true, detectSessionInUrl:true, flowType:"pkce"}});
+    var ses = await sb.auth.getSession();
+    return ses.data && ses.data.session ? ses.data.session : null;
+  }
+
+  function registerSubs(){
+    db.collection("metrics").onSnapshot(function(snap){
+      metrics = docsOf(snap).map(function(o){
+        return {id:o.id, name:o.data.name || o.id, unit:o.data.unit || "шт",
+          mode:o.data.mode === "sum" ? "sum" : "level",
+          target:(o.data.target === undefined || o.data.target === null ? null : Number(o.data.target)),
+          tdate:o.data.tdate || "", zero:!!o.data.zero, ord:o.data.ord || 0};
+      });
+      render();
+    });
+    db.collection("weeks").onSnapshot(function(snap){
+      rows = docsOf(snap).map(function(o){
+        var vals = {};
+        for(var k in o.data) if(k !== "note") vals[k] = o.data[k];
+        return {id:o.id, vals:vals, note:o.data.note || ""};
+      });
+      render();
+    });
+    db.collection("rules").onSnapshot(function(snap){
+      rules = docsOf(snap).map(function(o){
+        return {id:o.id, ifs:o.data.ifs || "", thens:o.data.thens || "", ord:o.data.ord || 0};
+      });
+      renderRules();
+    });
+    db.collection("marks").onSnapshot(function(snap){
+      marks = docsOf(snap).map(function(o){
+        return {id:o.id, side:o.data.side || "before", text:o.data.text || "", ord:o.data.ord || 0};
+      });
+      renderPath();
+    });
+  }
+
+  async function afterAuth(session){
+    uid = session.user.id;
+    db = makeStore();
+    registerSubs();
+    $("whoAmI").textContent = session.user.email || "";
+    gate(null);
+    try{
+      await loadAll();
+      if(!metrics.length){
+        var t = Date.now();
+        var seed = [
+          {id:"v1", name:"Долг и накопления", unit:"\u20BD", mode:"level", target:0, tdate:null, zero:true, ord:t + 1},
+          {id:"v2", name:"Вес", unit:"кг", mode:"level", target:null, tdate:null, zero:false, ord:t + 2},
+          {id:"v3", name:"Чистых дней, всего", unit:"дн", mode:"sum", target:null, tdate:null, zero:false, ord:t + 3}
+        ];
+        for(var i = 0; i < seed.length; i++){
+          var sd = seed[i], id = sd.id;
+          delete sd.id;
+          try{ await db.collection("metrics").doc(id).set(sd); }catch(e){}
+        }
+        await loadAll();
+      }
+    }catch(e){ flash("flash", "Данные не загрузились: " + (e.message || e), true); }
+  }
+
+  async function initBackend(){
+    var url = LS.get("sb_url"), key = LS.get("sb_key");
+    if(!url || !key){ gate("gSetup"); return; }
+    gate("gWait", "Подключаюсь к базе.");
+    var session = null;
+    try{ session = await connect(url, key); }
+    catch(e){
+      gate("gSetup");
+      flashG("gFlash1", "Не подключилось: " + (e.message || e), true);
+      return;
+    }
+    if(session) await afterAuth(session);
+    else gate("gAuth");
+    sb.auth.onAuthStateChange(function(ev, s){
+      if(s && s.user && !uid) afterAuth(s);
+      if(ev === "SIGNED_OUT"){ uid = null; db = null; gate("gAuth"); }
+    });
+  }
+
+  function flashG(id, msg, warn){
+    var f = $(id);
+    f.textContent = msg;
+    f.className = warn ? "flash warn" : "flash";
+  }
+
+  function wireGate(){
+    $("sbSave").addEventListener("click", async function(){
+      var u = $("sbUrl").value.trim().replace(/\/+$/, ""), k = $("sbKey").value.trim();
+      if(!/^https:\/\/.+\.supabase\.co$/.test(u)){ flashG("gFlash1", "URL вида https://xxxx.supabase.co", true); return; }
+      if(k.length < 40){ flashG("gFlash1", "Ключ выглядит коротким", true); return; }
+      LS.set("sb_url", u); LS.set("sb_key", k);
+      flashG("gFlash1", "Сохранено, подключаюсь");
+      initBackend();
+    });
+    $("sendLink").addEventListener("click", async function(){
+      var mail = $("mail").value.trim();
+      if(!/.+@.+\..+/.test(mail)){ flashG("gFlash2", "Проверь адрес", true); return; }
+      try{
+        var r = await sb.auth.signInWithOtp({email: mail, options:{emailRedirectTo: location.href.split("#")[0]}});
+        if(r.error) throw r.error;
+        flashG("gFlash2", "Ссылка ушла на " + mail + ". Открой её на этом же устройстве.");
+      }catch(e){ flashG("gFlash2", "Не отправилось: " + (e.message || e), true); }
+    });
+    $("resetCfg").addEventListener("click", function(){
+      LS.del("sb_url"); LS.del("sb_key");
+      location.reload();
+    });
+    $("signOut").addEventListener("click", async function(){
+      if(sb) await sb.auth.signOut();
+      uid = null; db = null;
+      gate("gAuth");
+    });
+  }
+
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
+</script>
+</body>
+</html>
