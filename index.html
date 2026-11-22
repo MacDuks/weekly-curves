@@ -146,7 +146,7 @@
     <div id="gSetup" style="display:none">
       <p class="step">Шаг 1 из 2</p>
       <h1>Подключить базу</h1>
-      <p class="hint">Данные будут лежать в твоём проекте Supabase, не здесь. Нужно один раз вставить две строки из Project Settings → API.</p>
+      <p class="hint">Данные будут лежать в твоём проекте Supabase, не здесь. Две строки из Project Settings → API Keys: адрес проекта и <b>publishable key</b> (начинается с sb_publishable_). Легаси anon-ключ вида eyJ… тоже подойдёт.</p>
       <div class="card">
         <div class="fields">
           <div><label for="sbUrl">Project URL</label><input type="text" id="sbUrl" placeholder="https://xxxx.supabase.co" autocapitalize="off" autocomplete="off" spellcheck="false"></div>
@@ -1077,6 +1077,14 @@
   async function connect(url, key){
     var mod = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
     sb = mod.createClient(url, key, {auth:{persistSession:true, detectSessionInUrl:true, flowType:"pkce"}});
+    // ключ проверяется сразу: без этого ошибка всплывала бы только при отправке письма
+    var ping = await sb.from("metrics").select("id").limit(1);
+    if(ping.error){
+      var m = (ping.error.message || "") + " " + (ping.error.hint || "");
+      if(/api key|JWT|Invalid/i.test(m)) throw new Error("ключ не подходит к этому проекту (" + (ping.error.message || "Invalid API key") + ")");
+      if(/does not exist|schema cache|relation/i.test(m)) throw new Error("таблицы не созданы: выполни supabase.sql в SQL Editor");
+      throw new Error(ping.error.message || "база не отвечает");
+    }
     var ses = await sb.auth.getSession();
     return ses.data && ses.data.session ? ses.data.session : null;
   }
@@ -1146,6 +1154,7 @@
     try{ session = await connect(url, key); }
     catch(e){
       gate("gSetup");
+      $("sbUrl").value = url; $("sbKey").value = "";
       flashG("gFlash1", "Не подключилось: " + (e.message || e), true);
       return;
     }
@@ -1167,9 +1176,12 @@
     $("sbSave").addEventListener("click", async function(){
       var u = $("sbUrl").value.trim().replace(/\/+$/, ""), k = $("sbKey").value.trim();
       if(!/^https:\/\/.+\.supabase\.co$/.test(u)){ flashG("gFlash1", "URL вида https://xxxx.supabase.co", true); return; }
-      if(k.length < 40){ flashG("gFlash1", "Ключ выглядит коротким", true); return; }
+      if(!(/^sb_publishable_/.test(k) || /^eyJ/.test(k))){
+        flashG("gFlash1", "Нужен publishable key (sb_publishable_…) или легаси anon (eyJ…)", true);
+        return;
+      }
       LS.set("sb_url", u); LS.set("sb_key", k);
-      flashG("gFlash1", "Сохранено, подключаюсь");
+      flashG("gFlash1", "Проверяю ключ");
       initBackend();
     });
     $("sendLink").addEventListener("click", async function(){
