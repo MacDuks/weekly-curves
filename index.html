@@ -161,14 +161,19 @@
     <div id="gAuth" style="display:none">
       <p class="step">Шаг 2 из 2</p>
       <h1>Вход</h1>
-      <p class="hint">Почта, на неё придёт ссылка. Пароля нет. На телефоне достаточно один раз — сессия сохраняется.</p>
+      <p class="hint">Почта и пароль. Один раз на устройство — дальше сессия сохраняется. Первый раз нажми «Создать аккаунт».</p>
       <div class="card">
         <div class="fields">
           <div><label for="mail">Почта</label><input type="email" id="mail" placeholder="ты@почта" autocapitalize="off" autocomplete="email" spellcheck="false"></div>
+          <div><label for="pass">Пароль</label><input type="password" id="pass" placeholder="не короче 8 символов" autocomplete="current-password"></div>
         </div>
-        <div class="btnrow"><button class="go" id="sendLink">Прислать ссылку</button></div>
+        <div class="btnrow">
+          <button class="go" id="signIn">Войти</button>
+          <button class="ghost" id="signUp">Создать аккаунт</button>
+        </div>
         <p class="flash" id="gFlash2"></p>
       </div>
+      <p class="who"><button id="sendLink">прислать ссылку на почту вместо пароля</button></p>
       <p class="who"><button id="resetCfg">сменить проект Supabase</button></p>
     </div>
 
@@ -1213,6 +1218,46 @@
       flashG("gFlash1", "Проверяю ключ");
       initBackend();
     });
+    function creds(){
+      var mail = $("mail").value.trim(), pass = $("pass").value;
+      if(!/.+@.+\..+/.test(mail)){ flashG("gFlash2", "Проверь адрес", true); return null; }
+      if(pass.length < 8){ flashG("gFlash2", "Пароль не короче 8 символов", true); return null; }
+      return {email: mail, password: pass};
+    }
+
+    function authErr(e){
+      var m = (e && e.message) || String(e);
+      if(/Invalid login credentials/i.test(m)) return "Почта или пароль не подходят. Если аккаунта ещё нет — «Создать аккаунт»";
+      if(/already registered|User already/i.test(m)) return "Такой аккаунт уже есть — жми «Войти»";
+      if(/rate limit/i.test(m)) return "Лимит на письма исчерпан, но для пароля письмо не нужно — просто войди";
+      if(/Email not confirmed/i.test(m)) return "Аккаунт создан, но требует подтверждения по почте";
+      if(/weak|password/i.test(m) && /short|least/i.test(m)) return "Пароль слишком короткий";
+      return m;
+    }
+
+    $("signIn").addEventListener("click", async function(){
+      var c = creds();
+      if(!c) return;
+      flashG("gFlash2", "Вхожу");
+      try{
+        var r = await sb.auth.signInWithPassword(c);
+        if(r.error) throw r.error;
+        if(r.data && r.data.session) await afterAuth(r.data.session);
+      }catch(e){ flashG("gFlash2", authErr(e), true); }
+    });
+
+    $("signUp").addEventListener("click", async function(){
+      var c = creds();
+      if(!c) return;
+      flashG("gFlash2", "Создаю аккаунт");
+      try{
+        var r = await sb.auth.signUp(c);
+        if(r.error) throw r.error;
+        if(r.data && r.data.session){ await afterAuth(r.data.session); return; }
+        flashG("gFlash2", "Аккаунт создан. Подтверди его по ссылке из письма, потом «Войти»", true);
+      }catch(e){ flashG("gFlash2", authErr(e), true); }
+    });
+
     $("sendLink").addEventListener("click", async function(){
       var mail = $("mail").value.trim();
       if(!/.+@.+\..+/.test(mail)){ flashG("gFlash2", "Проверь адрес", true); return; }
@@ -1220,7 +1265,7 @@
         var r = await sb.auth.signInWithOtp({email: mail, options:{emailRedirectTo: location.href.split("#")[0]}});
         if(r.error) throw r.error;
         flashG("gFlash2", "Ссылка ушла на " + mail + ". Открой её на этом же устройстве.");
-      }catch(e){ flashG("gFlash2", "Не отправилось: " + (e.message || e), true); }
+      }catch(e){ flashG("gFlash2", "Не отправилось: " + authErr(e), true); }
     });
     $("resetCfg").addEventListener("click", function(){
       LS.del("sb_url"); LS.del("sb_key"); LS.set("sb_own", "1");
