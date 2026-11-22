@@ -12,6 +12,6 @@
 // в том браузере, где ввёл.
 
 window.APP_CONFIG = {
-  url: "",
-  key: ""
+  url: "https://gxnxevwwnuenvsfrvpqn.supabase.co",
+  key: "sb_publishable_bHNcrmWXem3U-wdoLKpJOQ_SNwiV4cb"
 };
